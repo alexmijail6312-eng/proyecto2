@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Control de Productos</title>
+  <title>Panel de Productos</title>
 
   <style>
     :root{
@@ -35,56 +35,31 @@
       border-radius:var(--radius);
       box-shadow:0 6px 20px rgba(0,0,0,0.08);
     }
-    input, select{
-      padding:10px;
-      border-radius:var(--radius);
-      border:1px solid #d4d9e1;
-      width:100%;
-      transition:0.2s;
-    }
-    input:focus{
-      border-color:var(--accent);
-      outline:none;
-      box-shadow:0 0 0 3px rgba(37,99,235,0.2);
-    }
-    button{
-      padding:10px 16px;
-      border-radius:var(--radius);
-      border:0;
-      cursor:pointer;
-      font-weight:600;
-      transition:0.2s;
-    }
-    button:hover{opacity:0.9}
-    .btn-primary{background:var(--accent);color:white}
-    .btn-outline{background:white;color:var(--accent);border:2px solid var(--accent)}
     table{width:100%;border-collapse:collapse;margin-top:16px;background:white;border-radius:var(--radius);overflow:hidden}
     th{background:#e8edf5;padding:14px;font-size:15px;text-align:left;color:#334155}
     td{padding:12px;border-bottom:1px solid #eef2f6;font-size:14px}
     tr:hover{background:#f7faff}
     .actions button{margin-right:6px}
+    .btn-outline, .btn-primary{padding:10px 16px;border-radius:var(--radius);border:0;cursor:pointer;font-weight:600;transition:0.2s}
+    .btn-outline{background:white;color:var(--accent);border:2px solid var(--accent)}
+    .btn-primary{background:var(--accent);color:white}
   </style>
 </head>
 
 <body>
-
 <header>
   <div class="container">
-    <h1>Panel de Control — Productos</h1>
-    <div style="margin-top:4px;opacity:0.9;">Interfaz profesional con colores y estilo moderno</div>
+    <h1>Productos</h1>
   </div>
 </header>
 
 <main class="container">
   <div class="card">
-
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;">
       <div style="flex:1;min-width:250px;">
-        <input id="search" placeholder="Buscar por nombre o código...">
+        <input id="search" placeholder="Buscar productos...">
       </div>
-
       <div style="display:flex;gap:10px;">
-        <button id="btnAdd" class="btn-primary">+ Añadir producto</button>
         <button id="btnExport" class="btn-outline">Exportar JSON</button>
         <button id="btnImport" class="btn-outline">Importar JSON</button>
         <input id="fileInput" type="file" accept="application/json" style="display:none">
@@ -94,133 +69,94 @@
     <table id="tbl">
       <thead>
         <tr>
-          <th>Código</th>
+          <th>ID</th>
           <th>Nombre</th>
           <th>Categoría</th>
-          <th>Precio (Bs)</th>
+          <th>Precio</th>
           <th>Stock</th>
-          <th>Acciones</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-
   </div>
 </main>
 
 <footer style="text-align:center;padding:20px;color:var(--muted);font-size:14px;">
-  © Tu sistema de control de productos — HTML estático
+  © Productos HTML
 </footer>
 
 <script>
-  const STORAGE_KEY = 'prod_app_v1';
-  let products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-
   const tbody = document.querySelector('#tbl tbody');
   const search = document.getElementById('search');
+  const STORAGE_KEY = 'prod_app_v1';
+  const fileInput = document.getElementById('fileInput');
 
-  function save(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-    render();
-  }
+  let products = [];
+
+  // Cargar productos desde productos.json (GitHub)
+  fetch('productos.json')
+    .then(response => response.json())
+    .then(data => {
+      products = data.productos || [];
+      render();
+    }).catch(err => console.error('Error al cargar JSON:', err));
 
   function render(filter=''){
     tbody.innerHTML = '';
     filter = filter.toLowerCase().trim();
 
-    products.forEach((p, i) => {
-      if(filter && !(p.nombre.toLowerCase().includes(filter) || p.codigo.toLowerCase().includes(filter)))
-        return;
-
+    products.forEach(p => {
+      if(filter && !(p.nombre.toLowerCase().includes(filter) || (p.categoria && p.categoria.toLowerCase().includes(filter)))) return;
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${p.codigo}</td>
+        <td>${p.id}</td>
         <td>${p.nombre}</td>
         <td>${p.categoria}</td>
-        <td>${Number(p.precio).toFixed(2)}</td>
+        <td>${p.precio}</td>
         <td>${p.stock}</td>
-        <td class="actions">
-          <button class="btn-outline" onclick="editProduct(${i})">Editar</button>
-          <button class="btn-primary" onclick="deleteProduct(${i})">Eliminar</button>
-        </td>
       `;
       tbody.appendChild(tr);
-    })
-  }
-
-  function addProduct(prod){ products.push(prod); save(); }
-
-  function editProduct(i){
-    const p = products[i];
-    const codigo = prompt("Código:", p.codigo); if(codigo===null) return;
-    const nombre = prompt("Nombre:", p.nombre); if(nombre===null) return;
-    const categoria = prompt("Categoría:", p.categoria); if(categoria===null) return;
-    const precio = prompt("Precio:", p.precio); if(precio===null) return;
-    const stock = prompt("Stock:", p.stock); if(stock===null) return;
-
-    products[i] = {
-      codigo, nombre, categoria,
-      precio:Number(precio)||0,
-      stock:Number(stock)||0
-    };
-    save();
-  }
-
-  function deleteProduct(i){
-    if(confirm("¿Eliminar producto?")){
-      products.splice(i,1);
-      save();
-    }
-  }
-
-  document.getElementById("btnAdd").onclick = () => {
-    const codigo = prompt("Código:"); if(codigo===null) return;
-    const nombre = prompt("Nombre:"); if(nombre===null) return;
-    const categoria = prompt("Categoría:"); if(categoria===null) return;
-    const precio = prompt("Precio:", "0"); if(precio===null) return;
-    const stock = prompt("Stock:", "0"); if(stock===null) return;
-
-    addProduct({
-      codigo, nombre, categoria,
-      precio:Number(precio)||0,
-      stock:Number(stock)||0
     });
-  };
+  }
 
-  document.getElementById("btnExport").onclick = () => {
-    const data = JSON.stringify(products, null, 2);
+  search.oninput = () => render(search.value);
+
+  // Exportar productos
+  document.getElementById('btnExport').onclick = () => {
+    const data = JSON.stringify({productos}, null, 2);
     const blob = new Blob([data], {type:'application/json'});
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = "productos.json";
+    a.download = 'productos_export.json';
     a.click();
   };
 
-  document.getElementById("btnImport").onclick = () => {
-    document.getElementById("fileInput").click();
+  // Importar productos desde archivo
+  document.getElementById('btnImport').onclick = () => {
+    fileInput.click();
   };
 
-  document.getElementById("fileInput").onchange = (ev) => {
+  fileInput.onchange = (ev) => {
     const file = ev.target.files[0];
     if(!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
       try{
-        products = JSON.parse(e.target.result);
-        save();
-        alert("Importación correcta.");
-      }catch{
-        alert("Error al importar.");
+        const imported = JSON.parse(e.target.result);
+        if(imported.productos && Array.isArray(imported.productos)){
+          products = imported.productos;
+          render();
+          alert('Importación correcta');
+        } else {
+          alert('Archivo inválido');
+        }
+      }catch(err){
+        alert('Error al importar JSON');
+        console.error(err);
       }
     };
     reader.readAsText(file);
   };
-
-  search.oninput = () => render(search.value);
-
-  render();
 </script>
-
 </body>
 </html>
