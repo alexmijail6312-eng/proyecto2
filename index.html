@@ -34,15 +34,17 @@
       padding:24px;
       border-radius:var(--radius);
       box-shadow:0 6px 20px rgba(0,0,0,0.08);
+      margin-bottom:20px;
     }
     table{width:100%;border-collapse:collapse;margin-top:16px;background:white;border-radius:var(--radius);overflow:hidden}
     th{background:#e8edf5;padding:14px;font-size:15px;text-align:left;color:#334155}
     td{padding:12px;border-bottom:1px solid #eef2f6;font-size:14px}
     tr:hover{background:#f7faff}
-    .actions button{margin-right:6px}
-    .btn-outline, .btn-primary{padding:10px 16px;border-radius:var(--radius);border:0;cursor:pointer;font-weight:600;transition:0.2s}
+    input, select{padding:8px 12px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-right:8px}
+    .actions button, .btn-outline, .btn-primary{padding:10px 16px;border-radius:var(--radius);border:0;cursor:pointer;font-weight:600;transition:0.2s}
     .btn-outline{background:white;color:var(--accent);border:2px solid var(--accent)}
     .btn-primary{background:var(--accent);color:white}
+    .flex-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
   </style>
 </head>
 
@@ -54,6 +56,20 @@
 </header>
 
 <main class="container">
+
+  <!-- Formulario para agregar productos -->
+  <div class="card">
+    <h2>Añadir Nuevo Producto</h2>
+    <div class="flex-row">
+      <input type="text" id="newNombre" placeholder="Nombre" />
+      <input type="text" id="newCategoria" placeholder="Categoría" />
+      <input type="number" id="newPrecio" placeholder="Precio" />
+      <input type="number" id="newStock" placeholder="Stock" />
+      <button id="btnAdd" class="btn-primary">Agregar</button>
+    </div>
+  </div>
+
+  <!-- Control e import/export -->
   <div class="card">
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;">
       <div style="flex:1;min-width:250px;">
@@ -88,7 +104,6 @@
 <script>
   const tbody = document.querySelector('#tbl tbody');
   const search = document.getElementById('search');
-  const STORAGE_KEY = 'prod_app_v1';
   const fileInput = document.getElementById('fileInput');
 
   let products = [];
@@ -156,6 +171,32 @@
       }
     };
     reader.readAsText(file);
+  };
+
+  // Añadir nuevo producto
+  document.getElementById('btnAdd').onclick = () => {
+    const nombre = document.getElementById('newNombre').value.trim();
+    const categoria = document.getElementById('newCategoria').value.trim();
+    const precio = parseFloat(document.getElementById('newPrecio').value);
+    const stock = parseInt(document.getElementById('newStock').value);
+
+    if(!nombre || !categoria || isNaN(precio) || isNaN(stock)){
+      alert('Completa todos los campos correctamente.');
+      return;
+    }
+
+    // Generar ID automático
+    const id = products.length ? Math.max(...products.map(p=>p.id))+1 : 1;
+
+    products.push({id, nombre, categoria, precio, stock});
+
+    // Limpiar campos
+    document.getElementById('newNombre').value='';
+    document.getElementById('newCategoria').value='';
+    document.getElementById('newPrecio').value='';
+    document.getElementById('newStock').value='';
+
+    render();
   };
 </script>
 </body>
